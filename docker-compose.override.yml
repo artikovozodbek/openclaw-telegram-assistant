@@ -1,0 +1,21 @@
+# Phase 1 override - GHCR image path.
+#
+# The original Live Talk override is preserved verbatim at:
+#   docker-compose.override.yml.live-talk-disabled
+# Restore it after building openclaw-advanced-openclaw:live-talk-2026.5.22.
+#
+# It is set aside because it pins every service to that custom image with
+# pull_policy: never, which cannot resolve until the image is built.
+#
+# realtime-web stays profile-gated: its build context ./realtime-web is not
+# shipped in this archive, so it must never start by default.
+services:
+  # NOTE: loopback-only publishing is enforced in docker-compose.yml itself,
+  # because Compose appends port lists instead of replacing them - an override
+  # here would ADD a 127.0.0.1 mapping while leaving the 0.0.0.0 one in place.
+  #
+  # The container binds 0.0.0.0 internally (--bind lan) because a loopback
+  # bind inside the namespace would make the published port unreachable.
+
+  realtime-web:
+    profiles: ["legacy-realtime-web"]

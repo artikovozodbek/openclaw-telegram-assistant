@@ -1,0 +1,59 @@
+{
+  "groupId": "-1001234567890",
+  "title": "Test Group For Openclaw",
+  "isForum": true,
+  "botApiVerifiedAt": null,
+  "mtprotoVerifiedAt": null,
+  "onboardingStatus": "active",
+  "topics": {
+    "1": {
+      "title": "General",
+      "status": "active",
+      "agentId": "general",
+      "routingMode": "static",
+      "inferredDomain": "general",
+      "evidenceLevel": "title_only",
+      "skills": ["telegram", "telegram-send", "topic-intelligence"],
+      "repeatedWorkflows": [],
+      "localSkillsCreated": [],
+      "localSkillsUpdated": [],
+      "pluginRecommendations": [],
+      "lastSeenAt": null,
+      "lastAuditAt": null
+    },
+    "4": {
+      "title": "Google Workspace",
+      "status": "active",
+      "agentId": "google_workspace",
+      "routingMode": "static",
+      "inferredDomain": "google_workspace",
+      "evidenceLevel": "title_only",
+      "skills": ["telegram", "telegram-send", "topic-intelligence", "gws-shared", "gws-calendar", "gws-gmail", "gws-drive"],
+      "repeatedWorkflows": [],
+      "localSkillsCreated": [],
+      "localSkillsUpdated": [],
+      "pluginRecommendations": [],
+      "lastSeenAt": null,
+      "lastAuditAt": null
+    },
+    "2": {
+      "title": "Odoo",
+      "status": "active",
+      "agentId": "general",
+      "routingMode": "adaptive",
+      "inferredDomain": "odoo",
+      "evidenceLevel": "title_only",
+      "skills": ["telegram", "telegram-send", "topic-intelligence"],
+      "repeatedWorkflows": [],
+      "localSkillsCreated": [],
+      "localSkillsUpdated": [],
+      "pluginRecommendations": [],
+      "lastSeenAt": null,
+      "lastAuditAt": null
+    }
+  },
+  "pluginSuggestions": [],
+  "lastAuditAt": null,
+  "createdAt": null,
+  "updatedAt": null
+}

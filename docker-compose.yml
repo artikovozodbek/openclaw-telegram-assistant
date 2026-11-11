@@ -1,0 +1,274 @@
+services:
+  openclaw-gateway:
+    image: ${OPENCLAW_IMAGE:-ghcr.io/openclaw/openclaw:latest}
+    pull_policy: always
+    env_file: .env
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      PATH: /home/node/.openclaw/workspace/bin:/home/node/.openclaw/workspace/node_modules/.bin:/home/node/.openclaw/browser-use-env/bin:/home/node/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+      TZ: ${OPENCLAW_TZ:-Asia/Tashkent}
+      # OPENCLAW_GATEWAY_PORT/BRIDGE_PORT in .env are HOST-side mapping values
+      # (left of the colon in ports:). env_file leaks them into the container,
+      # where in-container CLI calls then probe the host port instead of the
+      # real listener and fail with ECONNREFUSED. Pin them to the in-container
+      # ports so `gateway status`, `health`, and `gateway call` work.
+      OPENCLAW_GATEWAY_PORT: "18789"
+      OPENCLAW_BRIDGE_PORT: "18790"
+    volumes:
+      - ./config:/home/node/.openclaw
+      - ./workspace:/home/node/.openclaw/workspace
+      # openclaw writes an agent-cli shim to <config>/tmp/agent-cli via
+      # @openclaw/fs-safe atomic replace. Its strict identity check does an
+      # fstat on the renamed temp file, which fails with ENOENT on the Windows
+      # bind mount and aborts gateway startup. Keep tmp on a container-local
+      # volume so atomic replace works.
+      - openclaw-tmp:/home/node/.openclaw/tmp
+      # Plugin npm installs (~5.8k files) on the Windows bind mount make
+      # startup `doctor --fix` plugin capture crawl over 9P for 30+ min.
+      # Keep them on a container-local volume (seeded from config/npm).
+      - openclaw-npm:/home/node/.openclaw/npm
+      # SQLite state on the Windows bind mount made every message wait 10-16s
+      # (slow SQLite writes over 9P). Keep the databases on container-local volumes.
+      - openclaw-state:/home/node/.openclaw/state
+      - openclaw-agents:/home/node/.openclaw/agents
+      - openclaw-media:/home/node/.openclaw/media
+    ports:
+      # Loopback-only. Compose APPENDS port lists rather than replacing them,
+      # so an override file cannot narrow these - the host_ip must be set here.
+      # Drop the 127.0.0.1 prefix only after gateway auth is verified.
+      - "127.0.0.1:${OPENCLAW_GATEWAY_PORT:-18789}:18789"
+      - "127.0.0.1:${OPENCLAW_BRIDGE_PORT:-18790}:18790"
+      - "127.0.0.1:${OPENCLAW_REALTIME_HOST_PORT:-8877}:8787"
+    init: true
+    restart: unless-stopped
+    # Bypass the image entrypoint's pre-start `doctor --fix`. Since the
+    # 2026-10 image, doctor rewrites openclaw.json via fs-safe atomic replace
+    # and then fstat()s the renamed file, which returns ENOENT on the Windows
+    # bind mount (same bug as tmp above) -> doctor exits 1 -> restart loop.
+    # Migrations already ran; run `openclaw doctor` manually after upgrades.
+    entrypoint: ["node", "dist/index.js"]
+    command:
+      [
+        "gateway",
+        "--bind",
+        "${OPENCLAW_GATEWAY_BIND:-lan}",
+        "--port",
+        "18789",
+      ]
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:18789/healthz').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  openclaw-cli:
+    image: ${OPENCLAW_IMAGE:-ghcr.io/openclaw/openclaw:latest}
+    pull_policy: always
+    network_mode: "service:openclaw-gateway"
+    cap_drop:
+      - NET_RAW
+      - NET_ADMIN
+    security_opt:
+      - no-new-privileges:true
+    env_file: .env
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      PATH: /home/node/.openclaw/workspace/bin:/home/node/.openclaw/workspace/node_modules/.bin:/home/node/.openclaw/browser-use-env/bin:/home/node/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+      BROWSER: echo
+      TZ: ${OPENCLAW_TZ:-Asia/Tashkent}
+      # Same host-vs-container port correction as openclaw-gateway above.
+      # This service shares the gateway's network namespace, so it must talk
+      # to the in-container listener, not the host mapping.
+      OPENCLAW_GATEWAY_PORT: "18789"
+      OPENCLAW_BRIDGE_PORT: "18790"
+    volumes:
+      - ./config:/home/node/.openclaw
+      - ./workspace:/home/node/.openclaw/workspace
+      # openclaw writes an agent-cli shim to <config>/tmp/agent-cli via
+      # @openclaw/fs-safe atomic replace. Its strict identity check does an
+      # fstat on the renamed temp file, which fails with ENOENT on the Windows
+      # bind mount and aborts gateway startup. Keep tmp on a container-local
+      # volume so atomic replace works.
+      - openclaw-tmp:/home/node/.openclaw/tmp
+      # Plugin npm installs (~5.8k files) on the Windows bind mount make
+      # startup `doctor --fix` plugin capture crawl over 9P for 30+ min.
+      # Keep them on a container-local volume (seeded from config/npm).
+      - openclaw-npm:/home/node/.openclaw/npm
+      # SQLite state on the Windows bind mount made every message wait 10-16s
+      # (slow SQLite writes over 9P). Keep the databases on container-local volumes.
+      - openclaw-state:/home/node/.openclaw/state
+      - openclaw-agents:/home/node/.openclaw/agents
+      - openclaw-media:/home/node/.openclaw/media
+    stdin_open: true
+    tty: true
+    init: true
+    entrypoint: ["node", "dist/index.js"]
+    depends_on:
+      - openclaw-gateway
+
+  cdp-proxy:
+    image: ${OPENCLAW_IMAGE:-ghcr.io/openclaw/openclaw:latest}
+    pull_policy: always
+    network_mode: "service:openclaw-gateway"
+    env_file: .env
+    environment:
+      HOME: /home/node
+      TZ: ${OPENCLAW_TZ:-Asia/Tashkent}
+      OPENCLAW_CDP_PROXY_HOST: 127.0.0.1
+      OPENCLAW_CDP_PROXY_PORT: 19222
+      OPENCLAW_CDP_UPSTREAM_HOST: host.docker.internal
+      OPENCLAW_CDP_UPSTREAM_PORT: 9222
+    volumes:
+      - ./config:/home/node/.openclaw
+      - ./workspace:/home/node/.openclaw/workspace
+      # openclaw writes an agent-cli shim to <config>/tmp/agent-cli via
+      # @openclaw/fs-safe atomic replace. Its strict identity check does an
+      # fstat on the renamed temp file, which fails with ENOENT on the Windows
+      # bind mount and aborts gateway startup. Keep tmp on a container-local
+      # volume so atomic replace works.
+      - openclaw-tmp:/home/node/.openclaw/tmp
+      # Plugin npm installs (~5.8k files) on the Windows bind mount make
+      # startup `doctor --fix` plugin capture crawl over 9P for 30+ min.
+      # Keep them on a container-local volume (seeded from config/npm).
+      - openclaw-npm:/home/node/.openclaw/npm
+      # SQLite state on the Windows bind mount made every message wait 10-16s
+      # (slow SQLite writes over 9P). Keep the databases on container-local volumes.
+      - openclaw-state:/home/node/.openclaw/state
+      - openclaw-agents:/home/node/.openclaw/agents
+      - openclaw-media:/home/node/.openclaw/media
+    init: true
+    restart: unless-stopped
+    healthcheck:
+      disable: true
+    entrypoint:
+      [
+        "node",
+        "/home/node/.openclaw/workspace/bin/cdp-host-proxy.js",
+      ]
+    depends_on:
+      - openclaw-gateway
+
+  realtime-web:
+    build:
+      context: ./realtime-web
+      args:
+        OPENCLAW_IMAGE: ${OPENCLAW_IMAGE:-ghcr.io/openclaw/openclaw:latest}
+    network_mode: "service:openclaw-gateway"
+    env_file: .env
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      PATH: /home/node/.openclaw/workspace/bin:/home/node/.openclaw/workspace/node_modules/.bin:/home/node/.openclaw/browser-use-env/bin:/home/node/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+      TZ: ${OPENCLAW_TZ:-Asia/Tashkent}
+      NODE_PATH: /home/node/realtime-web/node_modules:/home/node/.openclaw/workspace/node_modules
+      OPENCLAW_REALTIME_HOST: 0.0.0.0
+      OPENCLAW_REALTIME_PORT: 8787
+      OPENCLAW_REALTIME_PROVIDER: gemini
+      TELEGRAM_ALLOWED_USER_IDS: ${TELEGRAM_ALLOWED_USER_IDS:-}
+      OPENCLAW_REALTIME_TOOL_ALLOWLIST: ${OPENCLAW_REALTIME_TOOL_ALLOWLIST:-openclaw_agent,telegram_account_query,google_calendar_query,logistics_sheet_query,google_drive_query,google_workspace_cli,android_phone_query,browser_open_tab}
+      GEMINI_REALTIME_VOICE: Kore
+      OPENCLAW_AGENT_RUNNER: local
+      OPENCLAW_AGENT_NODE_SCRIPT: /app/dist/index.js
+      OPENCLAW_AGENT_WORKDIR: /app
+      OPENCLAW_WORKSPACE_DIR: /home/node/.openclaw/workspace
+      GOOGLE_WORKSPACE_CLI_CONFIG_DIR: ${GOOGLE_WORKSPACE_CLI_CONFIG_DIR:-/home/node/.openclaw/workspace/.config/gws}
+      GOOGLE_WORKSPACE_CLI_KEYRING_BACKEND: file
+    volumes:
+      - ./config:/home/node/.openclaw
+      - ./workspace:/home/node/.openclaw/workspace
+      # openclaw writes an agent-cli shim to <config>/tmp/agent-cli via
+      # @openclaw/fs-safe atomic replace. Its strict identity check does an
+      # fstat on the renamed temp file, which fails with ENOENT on the Windows
+      # bind mount and aborts gateway startup. Keep tmp on a container-local
+      # volume so atomic replace works.
+      - openclaw-tmp:/home/node/.openclaw/tmp
+      # Plugin npm installs (~5.8k files) on the Windows bind mount make
+      # startup `doctor --fix` plugin capture crawl over 9P for 30+ min.
+      # Keep them on a container-local volume (seeded from config/npm).
+      - openclaw-npm:/home/node/.openclaw/npm
+      # SQLite state on the Windows bind mount made every message wait 10-16s
+      # (slow SQLite writes over 9P). Keep the databases on container-local volumes.
+      - openclaw-state:/home/node/.openclaw/state
+      - openclaw-agents:/home/node/.openclaw/agents
+      - openclaw-media:/home/node/.openclaw/media
+    init: true
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:8787/healthz').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    depends_on:
+      openclaw-gateway:
+        condition: service_healthy
+
+  tg-watcher:
+    image: ${OPENCLAW_IMAGE:-ghcr.io/openclaw/openclaw:latest}
+    pull_policy: always
+    # Only starts with: docker compose --profile mtproto up -d tg-watcher
+    # Requires TG_API_ID, TG_API_HASH, TG_USER_SESSION in .env (see scripts/mtproto-setup.sh)
+    profiles: ["mtproto"]
+    # share network with the gateway so the agent's `cron add` / etc.
+    # CLI calls can reach ws://127.0.0.1:18789 (same as openclaw-cli)
+    network_mode: "service:openclaw-gateway"
+    env_file: .env
+    environment:
+      HOME: /home/node
+      TZ: ${OPENCLAW_TZ:-Asia/Tashkent}
+      # Same host-vs-container port correction as openclaw-gateway/openclaw-cli.
+      # .env carries the HOST mapping port; in-container CLI calls must target
+      # the real listener or they fail with ECONNREFUSED.
+      OPENCLAW_GATEWAY_PORT: "18789"
+      OPENCLAW_BRIDGE_PORT: "18790"
+      PATH: /home/node/.openclaw/workspace/bin:/home/node/.openclaw/workspace/node_modules/.bin:/home/node/.openclaw/browser-use-env/bin:/home/node/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+      NODE_PATH: /home/node/.openclaw/workspace/node_modules
+    volumes:
+      - ./config:/home/node/.openclaw
+      - ./workspace:/home/node/.openclaw/workspace
+      # openclaw writes an agent-cli shim to <config>/tmp/agent-cli via
+      # @openclaw/fs-safe atomic replace. Its strict identity check does an
+      # fstat on the renamed temp file, which fails with ENOENT on the Windows
+      # bind mount and aborts gateway startup. Keep tmp on a container-local
+      # volume so atomic replace works.
+      - openclaw-tmp:/home/node/.openclaw/tmp
+      # Plugin npm installs (~5.8k files) on the Windows bind mount make
+      # startup `doctor --fix` plugin capture crawl over 9P for 30+ min.
+      # Keep them on a container-local volume (seeded from config/npm).
+      - openclaw-npm:/home/node/.openclaw/npm
+      # SQLite state on the Windows bind mount made every message wait 10-16s
+      # (slow SQLite writes over 9P). Keep the databases on container-local volumes.
+      - openclaw-state:/home/node/.openclaw/state
+      - openclaw-agents:/home/node/.openclaw/agents
+      - openclaw-media:/home/node/.openclaw/media
+    init: true
+    restart: unless-stopped
+    entrypoint:
+      [
+        "node",
+        "/home/node/.openclaw/workspace/skills/meeting-scanner/scripts/tg-watcher.js",
+      ]
+    depends_on:
+      - openclaw-gateway
+
+volumes:
+  openclaw-tmp:
+  openclaw-npm:
+  openclaw-state:
+  openclaw-agents:
+  openclaw-media:

@@ -1,0 +1,20 @@
+1. Install Docker Desktop: https://www.docker.com/products/docker-desktop/
+2. Quit Chrome completely (Cmd+Q on Mac, close all windows on Windows)
+
+3. Create a Telegram bot:
+   → Open Telegram → message @BotFather → /newbot → copy the token
+
+4. (Optional — for meeting/task/proxy skills) Create a Telegram app:
+   → Go to https://my.telegram.org/apps (log in with your Telegram phone)
+   → Create an app → copy TG_API_ID and TG_API_HASH
+
+5. Save .env.example as .env and paste:
+   - TELEGRAM_BOT_TOKEN = the bot token from step 3
+   - TG_API_ID, TG_API_HASH = from step 4 (leave empty to skip MTProto)
+
+6. Mac: run bash START.sh in Terminal
+   Windows: double-click START.bat
+
+7. If you added MTProto creds, scan the QR code with your Telegram app when prompted.
+
+8. Message your bot from your phone. Say hi.

@@ -1,0 +1,584 @@
+{
+  "meta": {
+    "lastTouchedVersion": "2026.8.2",
+    "migrations": {
+      "modelPolicyAllowlist": true
+    }
+  },
+  "wizard": {
+    "lastRunAt": "2026-05-14T10:03:45.53Z",
+    "lastRunVersion": "2026.5.7",
+    "lastRunCommand": "doctor",
+    "lastRunMode": "local"
+  },
+  "browser": {
+    "enabled": true,
+    "headless": false,
+    "defaultProfile": "chrome-cdp",
+    "profiles": {
+      "chrome-cdp": {
+        "cdpUrl": "ws://127.0.0.1:19222"
+      },
+      "openclaw": {
+        "cdpUrl": "ws://127.0.0.1:19222"
+      },
+      "user": {
+        "cdpUrl": "ws://127.0.0.1:19222"
+      }
+    },
+    "tabCleanup": {
+      "enabled": true
+    }
+  },
+  "models": {
+    "providers": {
+      "openai": {
+        "api": "openai-responses",
+        "models": [
+          {
+            "id": "gpt-5",
+            "name": "GPT-5",
+            "reasoning": true,
+            "input": [
+              "text"
+            ]
+          }
+        ]
+      },
+      "celion": {
+        "baseUrl": "${CELION_BASE_URL}",
+        "apiKey": "${CELION_API_KEY}",
+        "api": "openai-responses",
+        "authHeader": true,
+        "models": [
+          {
+            "id": "gpt-5.6-sol",
+            "name": "GPT-5.6 Sol",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            }
+          },
+          {
+            "id": "gpt-6.1-terra",
+            "name": "GPT-6.1 Terra",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            }
+          },
+          {
+            "id": "gpt-6-astra",
+            "name": "GPT-6 Astra",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            }
+          }
+        ]
+      },
+      "celion-backup": {
+        "baseUrl": "${CELION_BASE_URL}",
+        "apiKey": "${CELION_API_KEY_BACKUP}",
+        "api": "openai-responses",
+        "authHeader": true,
+        "models": [
+          {
+            "id": "gpt-5.6-sol",
+            "name": "GPT-5.6 Sol",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            }
+          },
+          {
+            "id": "gpt-6.1-terra",
+            "name": "GPT-6.1 Terra",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            }
+          },
+          {
+            "id": "gpt-6-astra",
+            "name": "GPT-6 Astra",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            }
+          }
+        ]
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "celion/gpt-6.1-terra",
+        "fallbacks": [
+          "celion-backup/gpt-6.1-terra",
+          "celion/gpt-6-astra",
+          "celion-backup/gpt-6-astra",
+          "google/gemini-3.5-flash",
+          "google/gemini-3.1-flash-lite"
+        ]
+      },
+      "compaction": {
+        "mode": "safeguard",
+        "maxActiveTranscriptBytes": 200000
+      },
+      "thinkingDefault": "off",
+      "timeoutSeconds": 1800,
+      "maxConcurrent": 4,
+      "subagents": {
+        "maxConcurrent": 8
+      },
+      "skills": [
+        "agent-browser",
+        "amocrm-web",
+        "browser-automation",
+        "call-analyzer",
+        "competitor-analyzer",
+        "healthcheck",
+        "hr-tracker",
+        "instagram-web",
+        "node-connect",
+        "notion-web",
+        "proxy-chat",
+        "self-improvement",
+        "skill-creator",
+        "taskflow",
+        "taskflow-inbox-triage",
+        "telegram",
+        "telegram-send",
+        "topic-intelligence",
+        "weather",
+        "whatsapp-web",
+        "x-com"
+      ],
+      "systemAgent": {
+        "agentId": "main"
+      },
+      "heartbeat": {
+        "every": "0m"
+      }
+    },
+    "entries": {
+      "main": {
+        "name": "Main",
+        "workspace": "/home/node/.openclaw/workspace",
+        "agentDir": "/home/node/.openclaw/agents/main/agent"
+      },
+      "general": {
+        "name": "General",
+        "workspace": "/home/node/.openclaw/workspaces/general",
+        "agentDir": "/home/node/.openclaw/agents/general/agent",
+        "skills": [
+          "telegram",
+          "telegram-send",
+          "healthcheck",
+          "weather",
+          "taskflow",
+          "topic-intelligence",
+          "self-improvement"
+        ]
+      },
+      "google_workspace": {
+        "name": "Google Workspace",
+        "workspace": "/home/node/.openclaw/workspaces/google_workspace",
+        "agentDir": "/home/node/.openclaw/agents/google_workspace/agent",
+        "skills": [
+          "telegram",
+          "telegram-send",
+          "topic-intelligence",
+          "self-improvement",
+          "gws-shared",
+          "gws-admin-reports",
+          "gws-calendar",
+          "gws-calendar-agenda",
+          "gws-calendar-insert",
+          "gws-chat",
+          "gws-chat-send",
+          "gws-classroom",
+          "gws-docs",
+          "gws-docs-write",
+          "gws-drive",
+          "gws-drive-upload",
+          "gws-events",
+          "gws-events-renew",
+          "gws-events-subscribe",
+          "gws-forms",
+          "gws-gmail",
+          "gws-gmail-forward",
+          "gws-gmail-read",
+          "gws-gmail-reply",
+          "gws-gmail-reply-all",
+          "gws-gmail-send",
+          "gws-gmail-triage",
+          "gws-gmail-watch",
+          "gws-keep",
+          "gws-meet",
+          "gws-people",
+          "gws-script",
+          "gws-script-push",
+          "gws-sheets",
+          "gws-sheets-append",
+          "gws-sheets-read",
+          "gws-slides",
+          "gws-tasks",
+          "gws-workflow",
+          "gws-workflow-email-to-task",
+          "gws-workflow-file-announce",
+          "gws-workflow-meeting-prep",
+          "gws-workflow-standup-report",
+          "gws-workflow-weekly-digest"
+        ]
+      },
+      "topic_1001234567890_1": {
+        "name": "General Topic (Test Group For Openclaw)",
+        "workspace": "/home/node/.openclaw/workspaces/topic_1001234567890_1",
+        "agentDir": "/home/node/.openclaw/agents/topic_1001234567890_1/agent",
+        "skills": [
+          "telegram",
+          "telegram-send",
+          "topic-intelligence",
+          "healthcheck",
+          "weather",
+          "taskflow"
+        ]
+      },
+      "topic_1001234567890_2": {
+        "name": "Odoo Topic (Test Group For Openclaw)",
+        "workspace": "/home/node/.openclaw/workspaces/topic_1001234567890_2",
+        "agentDir": "/home/node/.openclaw/agents/topic_1001234567890_2/agent",
+        "skills": [
+          "telegram",
+          "telegram-send",
+          "topic-intelligence",
+          "odoo-topic-triage"
+        ]
+      },
+      "topic_1001234567890_4": {
+        "name": "Google Workspace Topic (Test Group For Openclaw)",
+        "workspace": "/home/node/.openclaw/workspaces/topic_1001234567890_4",
+        "agentDir": "/home/node/.openclaw/agents/topic_1001234567890_4/agent",
+        "skills": [
+          "telegram",
+          "telegram-send",
+          "topic-intelligence",
+          "gws-shared",
+          "gws-calendar",
+          "gws-gmail",
+          "gws-drive"
+        ]
+      },
+      "topic_1001234567890_27": {
+        "name": "Education Topic (Test Group For Openclaw)",
+        "workspace": "/home/node/.openclaw/workspaces/topic_1001234567890_27",
+        "agentDir": "/home/node/.openclaw/agents/topic_1001234567890_27/agent",
+        "skills": [
+          "telegram",
+          "telegram-send",
+          "topic-intelligence"
+        ]
+      }
+    },
+    "ownership": "explicit"
+  },
+  "skills": {
+    "load": {
+      "extraDirs": [
+        "/home/node/.openclaw/workspace/skills"
+      ]
+    }
+  },
+  "tools": {
+    "exec": {
+      "security": "allowlist",
+      "ask": "always"
+    },
+    "media": {
+      "audio": {
+        "enabled": true,
+        "maxBytes": 20971520,
+        "echoTranscript": true
+      },
+      "models": [
+        {
+          "provider": "elevenlabs",
+          "model": "scribe_v2",
+          "capabilities": [
+            "audio"
+          ]
+        },
+        {
+          "provider": "google",
+          "model": "gemini-3.1-pro-preview",
+          "providerOptions": {
+            "languageHint": {
+              "languageCode": "ru"
+            }
+          },
+          "capabilities": [
+            "audio"
+          ]
+        }
+      ]
+    },
+    "web": {
+      "fetch": {
+        "enabled": true
+      },
+      "search": {
+        "enabled": false
+      }
+    },
+    "toolSearch": false
+  },
+  "messages": {
+    "ackReactionScope": "group-mentions",
+    "groupChat": {
+      "visibleReplies": "message_tool"
+    }
+  },
+  "commands": {
+    "native": "auto",
+    "nativeSkills": "auto",
+    "restart": true
+  },
+  "session": {
+    "dmScope": "per-peer"
+  },
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "dmPolicy": "allowlist",
+      "botToken": "${TELEGRAM_BOT_TOKEN}",
+      "allowFrom": [
+        "123456789"
+      ],
+      "groupPolicy": "allowlist",
+      "groupAllowFrom": [
+        "123456789"
+      ],
+      "groups": {
+        "-1001234567890": {
+          "requireMention": true,
+          "topics": {
+            "1": {
+              "agentId": "topic_1001234567890_1",
+              "requireMention": true,
+              "systemPrompt": "You are the dedicated OpenClaw assistant profile for Telegram topic \"General\". Topic domain: general. Use only the skills visible in this topic agent's allowlist. Use topic-intelligence to infer repeated workflows from real messages and create safe local markdown procedures when justified. Do not install external plugins, npm packages, Python packages, hook packs, or executable code. Recommend external integrations for owner approval only. Keep replies in this topic concise, practical, and scoped to the topic."
+            },
+            "2": {
+              "agentId": "topic_1001234567890_2",
+              "requireMention": true,
+              "systemPrompt": "You are the dedicated OpenClaw assistant profile for Telegram topic \"Odoo\". Topic domain: odoo. Use only the skills visible in this topic agent's allowlist. Use topic-intelligence to infer repeated workflows from real messages and create safe local markdown procedures when justified. Do not install external plugins, npm packages, Python packages, hook packs, or executable code. Recommend external integrations for owner approval only. Keep replies in this topic concise, practical, and scoped to the topic."
+            },
+            "4": {
+              "agentId": "topic_1001234567890_4",
+              "requireMention": true,
+              "systemPrompt": "You are the dedicated OpenClaw assistant profile for Telegram topic \"Google Workspace\". Topic domain: google_workspace. Use only the skills visible in this topic agent's allowlist. Use topic-intelligence to infer repeated workflows from real messages and create safe local markdown procedures when justified. Do not install external plugins, npm packages, Python packages, hook packs, or executable code. Recommend external integrations for owner approval only. Keep replies in this topic concise, practical, and scoped to the topic."
+            },
+            "27": {
+              "agentId": "topic_1001234567890_27",
+              "requireMention": true,
+              "systemPrompt": "You are the dedicated OpenClaw assistant profile for Telegram topic \"Education\". Topic domain: education. Use only the skills visible in this topic agent's allowlist. Use topic-intelligence to infer repeated workflows from real messages and create safe local markdown procedures when justified. Do not install external plugins, npm packages, Python packages, hook packs, or executable code. Recommend external integrations for owner approval only. Keep replies in this topic concise, practical, and scoped to the topic."
+            }
+          }
+        }
+      },
+      "streaming": {
+        "mode": "partial"
+      }
+    },
+    "discord": {
+      "enabled": false,
+      "voice": {
+        "enabled": true
+      }
+    }
+  },
+  "gateway": {
+    "mode": "local",
+    "bind": "lan",
+    "controlUi": {
+      "allowedOrigins": [
+        "http://localhost:18889",
+        "http://127.0.0.1:18889"
+      ]
+    },
+    "auth": {
+      "token": "${OPENCLAW_GATEWAY_TOKEN}"
+    },
+    "trustedProxies": []
+  },
+  "mcp": {
+    "servers": {}
+  },
+  "plugins": {
+    "allow": [],
+    "entries": {
+      "browser": {
+        "enabled": true
+      },
+      "elevenlabs": {
+        "enabled": true
+      },
+      "google-meet": {
+        "enabled": false,
+        "config": {
+          "defaultTransport": "chrome-node",
+          "defaultMode": "agent",
+          "realtime": {
+            "transcriptionProvider": "elevenlabs",
+            "agentId": "main",
+            "toolPolicy": "safe-read-only",
+            "providers": {
+              "elevenlabs": {
+                "modelId": "scribe_v2_realtime",
+                "audioFormat": "ulaw_8000",
+                "sampleRate": 8000,
+                "commitStrategy": "vad"
+              }
+            }
+          }
+        }
+      },
+      "discord": {
+        "enabled": false
+      },
+      "anthropic": {
+        "enabled": false
+      },
+      "xai": {
+        "enabled": false
+      },
+      "ollama": {
+        "enabled": false
+      },
+      "github": {
+        "enabled": false
+      },
+      "canvas": {
+        "enabled": false
+      },
+      "cua-computer": {
+        "enabled": false
+      },
+      "device-pair": {
+        "enabled": false
+      },
+      "geolocation": {
+        "enabled": false
+      },
+      "linux-node": {
+        "enabled": false
+      },
+      "talk-voice": {
+        "enabled": false
+      }
+    }
+  },
+  "talk": {
+    "provider": "google",
+    "speechLocale": "ru-RU",
+    "interruptOnSpeech": true,
+    "providers": {
+      "google": {
+        "apiKey": "${GEMINI_API_KEY}",
+        "modelId": "gemini-3.1-flash-tts-preview",
+        "voiceId": "Kore",
+        "audioProfile": "Use a clear, natural assistant voice. Speak Russian naturally when the text is Russian, English naturally when the text is English, and keep numbers and dates easy to understand."
+      }
+    },
+    "realtime": {
+      "provider": "google",
+      "model": "gemini-3.1-flash-live-preview",
+      "mode": "realtime",
+      "transport": "provider-websocket",
+      "brain": "agent-consult",
+      "providers": {
+        "google": {
+          "apiKey": "${GEMINI_API_KEY}",
+          "model": "gemini-3.1-flash-live-preview",
+          "voice": "Kore"
+        }
+      },
+      "speakerVoice": "Kore"
+    }
+  },
+  "tts": {
+    "auto": "always",
+    "mode": "final",
+    "provider": "google",
+    "maxTextLength": 4000,
+    "timeoutMs": 60000,
+    "providers": {
+      "elevenlabs": {
+        "apiKey": "${ELEVENLABS_API_KEY}",
+        "voiceId": "6r3jSnrDWN6mYQeBHOOU",
+        "modelId": "eleven_v3",
+        "languageCode": "ru",
+        "voiceSettings": {
+          "stability": 0.3,
+          "similarityBoost": 0.75,
+          "speed": 0.8
+        }
+      },
+      "google": {
+        "apiKey": "${GEMINI_API_KEY}",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voiceName": "Kore",
+        "audioProfile": "Use a clear, natural assistant voice. Speak Russian naturally when the text is Russian, English naturally when the text is English, and keep numbers and dates easy to understand."
+      }
+    },
+    "enabled": true
+  },
+  "bindings": [
+    {
+      "type": "route",
+      "agentId": "main",
+      "match": {
+        "channel": "telegram",
+        "accountId": "default"
+      }
+    }
+  ]
+}

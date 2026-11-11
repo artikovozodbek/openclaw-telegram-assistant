@@ -1,0 +1,101 @@
+#!/usr/bin/env sh
+set -eu
+
+DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+ROOT=$(CDPATH= cd -- "$DIR/.." && pwd)
+
+# The durable gws config lives under the host-mounted workspace. In Docker on
+# Windows, chmod on that mount can be rejected or reported as 0777. The gws CLI
+# deliberately tightens permissions before writing token caches, so direct use
+# of the durable directory can fail with a misleading "failed to get token".
+#
+# Use a writable container-local runtime copy for normal CLI calls. Durable
+# files remain the source of truth; mutable token/discovery caches are written
+# under /tmp where Unix permissions work normally.
+if [ "${OPENCLAW_GWS_DISABLE_RUNTIME_CONFIG:-}" != "1" ]; then
+  SRC_CONFIG_DIR=${OPENCLAW_GWS_DURABLE_CONFIG_DIR:-${GOOGLE_WORKSPACE_CLI_CONFIG_DIR:-$ROOT/.config/gws}}
+  RUNTIME_CONFIG_DIR=${OPENCLAW_GWS_RUNTIME_CONFIG_DIR:-/tmp/openclaw-gws-config}
+
+  copy_config_seed() {
+    src_file=$1
+    dest_file=$2
+    name=$(basename "$src_file")
+
+    # For external Gmail/Workspace users, the OAuth client project id causes
+    # gws dynamic API calls to send x-goog-user-project. Google then requires
+    # the signed-in user to have serviceusage.services.use on the Cloud project,
+    # which defeats the "any Google Account can connect" OAuth flow. Keep the
+    # durable client JSON untouched, but strip project_id from the runtime copy
+    # unless a session explicitly opts into quota-project attribution.
+    if [ "$name" = "client_secret.json" ] \
+      && [ "${OPENCLAW_GWS_KEEP_CLIENT_PROJECT_ID:-}" != "1" ] \
+      && command -v node >/dev/null 2>&1; then
+      SRC_FILE=$src_file DEST_FILE=$dest_file node <<'NODE'
+const fs = require("fs");
+
+const src = process.env.SRC_FILE;
+const dest = process.env.DEST_FILE;
+const data = JSON.parse(fs.readFileSync(src, "utf8"));
+
+for (const key of ["installed", "web"]) {
+  if (data[key] && Object.prototype.hasOwnProperty.call(data[key], "project_id")) {
+    data[key].project_id = "";
+  }
+}
+
+fs.writeFileSync(dest, `${JSON.stringify(data, null, 2)}\n`, { mode: 0o600 });
+NODE
+    else
+      cp -f "$src_file" "$dest_file"
+    fi
+  }
+
+  if [ -d "$SRC_CONFIG_DIR" ] && [ "$SRC_CONFIG_DIR" != "$RUNTIME_CONFIG_DIR" ]; then
+    mkdir -p "$RUNTIME_CONFIG_DIR"
+    chmod 700 "$RUNTIME_CONFIG_DIR" 2>/dev/null || true
+
+    # Credential/key seed files: always refresh from durable storage so OAuth
+    # rotations made outside the container are picked up immediately.
+    for file in \
+      "$SRC_CONFIG_DIR/client_secret.json" \
+      "$SRC_CONFIG_DIR/credentials.enc" \
+      "$SRC_CONFIG_DIR/credentials.json" \
+      "$SRC_CONFIG_DIR/.encryption_key" \
+      "$SRC_CONFIG_DIR/accounts.json" \
+      "$SRC_CONFIG_DIR"/credentials.*.enc
+    do
+      [ -f "$file" ] || continue
+      name=$(basename "$file")
+      copy_config_seed "$file" "$RUNTIME_CONFIG_DIR/$name"
+      chmod 600 "$RUNTIME_CONFIG_DIR/$name" 2>/dev/null || true
+    done
+
+    # Mutable caches: seed only when missing. Once gws refreshes them in the
+    # runtime directory, keep the writable copy for the rest of the session.
+    for name in token_cache.json sa_token_cache.json account_timezone; do
+      if [ -f "$SRC_CONFIG_DIR/$name" ] && [ ! -f "$RUNTIME_CONFIG_DIR/$name" ]; then
+        cp -f "$SRC_CONFIG_DIR/$name" "$RUNTIME_CONFIG_DIR/$name"
+        chmod 600 "$RUNTIME_CONFIG_DIR/$name" 2>/dev/null || true
+      fi
+    done
+
+    if [ -d "$SRC_CONFIG_DIR/cache" ] && [ ! -d "$RUNTIME_CONFIG_DIR/cache" ]; then
+      cp -R "$SRC_CONFIG_DIR/cache" "$RUNTIME_CONFIG_DIR/cache" 2>/dev/null || true
+      chmod -R u+rwX,go-rwx "$RUNTIME_CONFIG_DIR/cache" 2>/dev/null || true
+    fi
+
+    export OPENCLAW_GWS_DURABLE_CONFIG_DIR="$SRC_CONFIG_DIR"
+    export GOOGLE_WORKSPACE_CLI_CONFIG_DIR="$RUNTIME_CONFIG_DIR"
+    export GOOGLE_WORKSPACE_CLI_KEYRING_BACKEND=${GOOGLE_WORKSPACE_CLI_KEYRING_BACKEND:-file}
+  fi
+fi
+
+if [ -f "$ROOT/node_modules/@googleworkspace/cli/run.js" ]; then
+  exec node "$ROOT/node_modules/@googleworkspace/cli/run.js" "$@"
+fi
+
+if [ -f "$ROOT/vendor/googleworkspace-cli/npm/run.js" ]; then
+  exec node "$ROOT/vendor/googleworkspace-cli/npm/run.js" "$@"
+fi
+
+exec gws "$@"

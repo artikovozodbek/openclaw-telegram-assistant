@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+set -eu
+
+DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+if ! command -v node >/dev/null 2>&1; then
+  echo "Error: Node.js is required to run gws-register-account." >&2
+  exit 127
+fi
+
+exec node "$DIR/gws-register-account.js" "$@"

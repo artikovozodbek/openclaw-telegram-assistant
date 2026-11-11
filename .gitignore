@@ -1,0 +1,98 @@
+# Secrets
+# .env
+
+# Chrome profile data (large, local-only)
+config/chrome-cdp-data/
+config/chrome-cdp-profile/
+
+# Runtime data
+config/agents/*/sessions/
+config/agents/*/agent/
+config/workspaces/*/.openclaw/
+config/workspaces/*/HEARTBEAT.md
+config/workspaces/*/IDENTITY.md
+config/workspaces/*/TOOLS.md
+config/logs/
+config/media/
+config/canvas/
+config/cron/
+config/devices/
+config/delivery-queue/
+config/flows/
+config/subagents/
+config/credentials/
+config/telegram/
+config/identity/
+config/memory/
+config/tui/
+config/update-check.json
+config/openclaw.json.bak*
+config/openclaw.json.clobbered.*
+config/openclaw.json.last-good
+config/openclaw.json.rejected.*
+config/plugin-skills/browser-automation
+config/npm/node_modules/
+config/.owner_lock.log
+
+# Workspace-local credentials and runtime state
+workspace/.config/
+workspace/.env
+workspace/.env.*
+workspace/.learnings/
+workspace/**/.venv/
+workspace/vendor/googleworkspace-cli/
+workspace/vendor/telegram-mcp/
+
+# browser-use venv (reinstalled via setup.sh)
+config/browser-use-env/
+
+# Alternate/custom OpenClaw runtime state
+config-custom/agents/*/sessions/
+config-custom/canvas/
+config-custom/cron/
+config-custom/delivery-queue/
+config-custom/identity/
+config-custom/logs/
+config-custom/media/
+config-custom/memory/
+config-custom/tasks/
+config-custom/telegram/
+config-custom/workspace/
+config-custom/update-check.json
+config-custom/openclaw.json.clobbered.*
+config-custom/openclaw.json.last-good
+config-custom/.owner_lock.log
+
+# Backup files
+*.bak
+*.bak.*
+
+# OpenClaw cloned repo (not needed)
+openclaw/
+
+# Workspace runtime files
+workspace/.git/
+workspace/.openclaw/
+workspace/exports/
+workspace/memory/
+workspace/*.py
+workspace/*.js
+workspace/node_modules/
+
+# OS
+.DS_Store
+
+# Packaging
+workshop-*.zip
+
+# First-run artifacts
+.env
+config/browser-use-env/
+workspace/node_modules/
+workspace/package-lock.json
+
+# Realtime Mini App local runtime
+realtime-web/node_modules/
+realtime-web/.env.local
+realtime-web/*.log
+realtime-web/logs/
