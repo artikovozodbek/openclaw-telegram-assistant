@@ -17,7 +17,7 @@ services:
       OPENCLAW_BRIDGE_PORT: "18790"
     volumes:
       - ./config:/home/node/.openclaw
-      - ./workspace:/home/node/.openclaw/workspace
+      - openclaw-workspace:/home/node/.openclaw/workspace
       # openclaw writes an agent-cli shim to <config>/tmp/agent-cli via
       # @openclaw/fs-safe atomic replace. Its strict identity check does an
       # fstat on the renamed temp file, which fails with ENOENT on the Windows
@@ -92,7 +92,7 @@ services:
       OPENCLAW_BRIDGE_PORT: "18790"
     volumes:
       - ./config:/home/node/.openclaw
-      - ./workspace:/home/node/.openclaw/workspace
+      - openclaw-workspace:/home/node/.openclaw/workspace
       # openclaw writes an agent-cli shim to <config>/tmp/agent-cli via
       # @openclaw/fs-safe atomic replace. Its strict identity check does an
       # fstat on the renamed temp file, which fails with ENOENT on the Windows
@@ -129,7 +129,7 @@ services:
       OPENCLAW_CDP_UPSTREAM_PORT: 9222
     volumes:
       - ./config:/home/node/.openclaw
-      - ./workspace:/home/node/.openclaw/workspace
+      - openclaw-workspace:/home/node/.openclaw/workspace
       # openclaw writes an agent-cli shim to <config>/tmp/agent-cli via
       # @openclaw/fs-safe atomic replace. Its strict identity check does an
       # fstat on the renamed temp file, which fails with ENOENT on the Windows
@@ -184,7 +184,7 @@ services:
       GOOGLE_WORKSPACE_CLI_KEYRING_BACKEND: file
     volumes:
       - ./config:/home/node/.openclaw
-      - ./workspace:/home/node/.openclaw/workspace
+      - openclaw-workspace:/home/node/.openclaw/workspace
       # openclaw writes an agent-cli shim to <config>/tmp/agent-cli via
       # @openclaw/fs-safe atomic replace. Its strict identity check does an
       # fstat on the renamed temp file, which fails with ENOENT on the Windows
@@ -240,7 +240,7 @@ services:
       NODE_PATH: /home/node/.openclaw/workspace/node_modules
     volumes:
       - ./config:/home/node/.openclaw
-      - ./workspace:/home/node/.openclaw/workspace
+      - openclaw-workspace:/home/node/.openclaw/workspace
       # openclaw writes an agent-cli shim to <config>/tmp/agent-cli via
       # @openclaw/fs-safe atomic replace. Its strict identity check does an
       # fstat on the renamed temp file, which fails with ENOENT on the Windows
@@ -272,3 +272,4 @@ volumes:
   openclaw-state:
   openclaw-agents:
   openclaw-media:
+  openclaw-workspace:

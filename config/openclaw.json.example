@@ -369,7 +369,35 @@
         "enabled": false
       }
     },
-    "toolSearch": false
+    "toolSearch": false,
+    "deny": [
+      "conversations_list",
+      "conversations_send",
+      "conversations_turn",
+      "create_goal",
+      "dashboard",
+      "get_goal",
+      "github_identity_status",
+      "image_generate",
+      "intent",
+      "mobile_ui",
+      "music_generate",
+      "nodes",
+      "plugins",
+      "portal",
+      "presence",
+      "progress_card",
+      "secrets",
+      "sessions_history",
+      "sessions_list",
+      "sessions_search",
+      "sessions_send",
+      "sessions_yield",
+      "theme",
+      "transcripts",
+      "update_goal",
+      "video_generate"
+    ]
   },
   "messages": {
     "ackReactionScope": "group-mentions",
@@ -453,7 +481,6 @@
     "servers": {}
   },
   "plugins": {
-    "allow": [],
     "entries": {
       "browser": {
         "enabled": true
@@ -513,7 +540,18 @@
       },
       "talk-voice": {
         "enabled": false
+      },
+      "fast-lane": {
+        "enabled": true,
+        "hooks": {
+          "allowConversationAccess": true
+        }
       }
+    },
+    "load": {
+      "paths": [
+        "/home/node/.openclaw/workspace/plugins/fast-lane"
+      ]
     }
   },
   "talk": {

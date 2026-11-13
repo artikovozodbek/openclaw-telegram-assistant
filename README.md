@@ -11,6 +11,8 @@ setup scripts.
 > **Not included:** `.env`, Telegram sessions, bot token, OAuth files, chat history, agent
 > memory and runtime state. Telegram IDs in config and tests are placeholders.
 
+![ClawAI demo](docs/media/demo.gif)
+
 ---
 
 ## Architecture
@@ -51,6 +53,31 @@ How:
 - removed per-message re-reading of instruction files, added a browserless web search
 - found that **huge session history** caused 27-second turns, and tuned compaction
 - moved SQLite state from Windows bind mounts to Docker volumes
+
+**Speed work, round 2 (Nov 2026): profiled, then fixed the real bottlenecks**
+
+| Task (same test, end to end) | Before | After |
+|---|---|---|
+| Plain chat ("Hi, how are you?") | 19.7 s | **4.2 s** (≈2 s inside the bot) |
+| Weather / web lookup | 28 s | 19.4 s |
+| "What's new in my Telegram?" | 57 s | **13.9 s** |
+| Prompt size per message | 40k tokens | 23.6k tokens |
+
+What I found and changed (details in [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md)):
+- **Fast lane plugin** (`workspace/plugins/fast-lane/`): a `before_agent_reply` hook answers
+  plain conversation with one streamed model call (~2 s) *before* the full agent turn is
+  prepared; anything that needs tools, live data, Telegram, files or the browser goes to the
+  agent unchanged. Rule-based pre-filter + model router (`AGENT` token), 7 s timeout,
+  second-account fallback, per-turn log.
+- **Prompt diet:** 26 unused tool schemas denied (78k → 51k chars), instruction file
+  21k → 7k chars and long-term memory 29k → 1.6k chars (history archived, not deleted).
+- **Workspace off the Windows bind mount:** CPU-profiling the gateway showed seconds of
+  synchronous `lstat`/`stat` over the 9p mount (~1.5 ms per call); the workspace now lives
+  in a Docker volume.
+- **Skill memory:** the agent turns any repeated multi-step task into a one-step script and
+  records it in a "Learned Fast Paths" table in `AGENTS.md`.
+- **Upgraded OpenClaw** 2026.9.8 → 2026.11 (session/prompt-cache fixes) with full volume
+  backups, image rollback tag and a doctor-driven database migration.
 
 **Reliability**
 - model fallback chain across two GPT provider accounts plus free Gemini models
